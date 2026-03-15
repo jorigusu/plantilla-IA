@@ -118,7 +118,36 @@
     #nota-final { background: #FFF8E1; border-top: 1px solid #FFD54F; padding: 11px 18px; display: flex; align-items: flex-start; gap: 8px; }
     #nota-final p { font-size: 12px; color: #7A5800; line-height: 1.6; }
 
-    /* ── MÓVIL (iPhone grande: Plus, Pro Max) ── */
+    /* ── RESPONSIVE UNIVERSAL ── */
+
+    /* Escritorio grande (>1024px): centrado con max-width */
+    @media (min-width: 1025px) {
+      #banner .inner, #barra-inner, #aviso, #campos { max-width: 700px; margin-left: auto; margin-right: auto; }
+      #banner { padding: 32px 24px 26px; }
+      #banner h1 { font-size: 28px; }
+      #banner p { font-size: 15px; }
+      textarea, input[type=text] { font-size: 15px; }
+      .campo-titulo { font-size: 15px; }
+      .campo-instruccion { font-size: 13px; }
+      .opcion-texto { font-size: 14px; }
+      #btn-generar { padding: 15px 48px; font-size: 16px; }
+    }
+
+    /* Escritorio mediano (769px - 1024px): iPad landscape / laptop pequeño */
+    @media (min-width: 769px) and (max-width: 1024px) {
+      #banner h1 { font-size: 24px; }
+      #banner p { font-size: 14px; }
+      textarea, input[type=text] { font-size: 15px; }
+      .campo-titulo { font-size: 15px; }
+      .campo-instruccion { font-size: 13px; }
+      .opcion-texto { font-size: 14px; }
+      .caja-check { width: 22px; height: 22px; min-width: 22px; }
+      .caja-radio { width: 22px; height: 22px; min-width: 22px; }
+      #btn-generar { padding: 15px 44px; font-size: 16px; }
+      #aviso div { font-size: 14px; }
+    }
+
+    /* Móvil (hasta 768px): iPhone y iPad vertical */
     @media (max-width: 768px) {
       body { padding-bottom: 80px; }
 
@@ -153,19 +182,10 @@
         line-height: 1.65;
       }
 
-      .opcion {
-        padding: 9px 0;
-        margin-bottom: 6px;
-        gap: 14px;
-      }
-      .caja-check {
-        width: 28px; height: 28px; min-width: 28px;
-        border-radius: 6px;
-      }
+      .opcion { padding: 9px 0; margin-bottom: 6px; gap: 14px; }
+      .caja-check { width: 28px; height: 28px; min-width: 28px; border-radius: 6px; }
       .caja-check .check-mark { font-size: 17px; }
-      .caja-radio {
-        width: 28px; height: 28px; min-width: 28px;
-      }
+      .caja-radio { width: 28px; height: 28px; min-width: 28px; }
       .caja-radio .radio-dot { width: 13px; height: 13px; }
       .opcion-texto { font-size: 17px; line-height: 1.55; }
 
@@ -177,46 +197,18 @@
       .nota-imagen .titulo { font-size: 15px; }
       .nota-imagen .desc { font-size: 14px; line-height: 1.6; }
 
-      #btn-generar {
-        padding: 18px 0;
-        width: 100%;
-        font-size: 18px;
-        border-radius: 12px;
-      }
+      #btn-generar { padding: 18px 0; width: 100%; font-size: 18px; border-radius: 12px; }
       #aviso-campos { font-size: 14px; }
 
       #resultado-header { padding: 14px 16px; }
       #resultado-header span { font-size: 16px; }
-      #btn-copiar {
-        padding: 10px 18px;
-        font-size: 15px;
-        border-radius: 8px;
-      }
-      #prompt-texto {
-        font-size: 14px;
-        padding: 16px;
-        max-height: 360px;
-        line-height: 1.8;
-      }
+      #btn-copiar { padding: 10px 18px; font-size: 15px; border-radius: 8px; }
+      #prompt-texto { font-size: 14px; padding: 16px; max-height: 360px; line-height: 1.8; }
       #nota-final { padding: 14px 16px; gap: 10px; }
       #nota-final p { font-size: 14px; }
     }
 
-    /* ── iPad ── */
-    @media (min-width: 769px) and (max-width: 1024px) {
-      #banner h1 { font-size: 24px; }
-      #banner p { font-size: 15px; }
-      textarea, input[type=text] { font-size: 16px; }
-      .campo-titulo { font-size: 16px; }
-      .campo-instruccion { font-size: 14px; }
-      .opcion-texto { font-size: 15px; }
-      .caja-check { width: 22px; height: 22px; min-width: 22px; }
-      .caja-radio { width: 22px; height: 22px; min-width: 22px; }
-      #btn-generar { padding: 16px 44px; font-size: 17px; }
-      #aviso div { font-size: 15px; }
-    }
-
-    /* Mejora táctil general — sin highlight azul al tocar */
+    /* Mejora táctil — sin highlight azul al tocar */
     * { -webkit-tap-highlight-color: transparent; }
     .opcion { -webkit-user-select: none; user-select: none; }
   </style>
@@ -329,7 +321,7 @@
         <div class="campo-num">5</div>
         <div class="campo-info">
           <div class="campo-titulo-wrap">
-            <span class="campo-titulo">¿Qué NO debe hacer Claude?</span>
+            <span class="campo-titulo">¿Qué reglas debe seguir Claude?</span>
             <span class="badge-oblig">Obligatorio</span>
           </div>
           <div class="campo-instruccion">Marca las reglas que quieres que Claude siga.</div>
@@ -594,17 +586,29 @@
 
     // Botón generar — compatible iOS
     const btnGenerar = document.getElementById('btn-generar');
+    let generarTocado = false;
     btnGenerar.addEventListener('touchend', function(e) {
       e.preventDefault();
+      generarTocado = true;
       generar();
+      setTimeout(() => { generarTocado = false; }, 300);
     }, { passive: false });
+    btnGenerar.addEventListener('click', function() {
+      if (!generarTocado) generar();
+    });
 
-    // Botón copiar — compatible iOS
+    // Botón copiar — compatible iOS y escritorio
     const btnCopiar = document.getElementById('btn-copiar');
+    let copiarTocado = false;
     btnCopiar.addEventListener('touchend', function(e) {
       e.preventDefault();
+      copiarTocado = true;
       copiar();
+      setTimeout(() => { copiarTocado = false; }, 300);
     }, { passive: false });
+    btnCopiar.addEventListener('click', function() {
+      if (!copiarTocado) copiar();
+    });
 
     // Activar borde azul al enfocar campos
     document.querySelectorAll('.campo').forEach((el) => {
