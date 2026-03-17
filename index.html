@@ -71,12 +71,12 @@
     .subcampo-wrap { margin-bottom: 12px; }
 
     /* CHECKS Y RADIO */
-    .opcion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; cursor: pointer; user-select: none; }
+    .opcion { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; user-select: none; }
     .opcion-radio { align-items: center; }
     .caja-check {
       width: 18px; height: 18px; min-width: 18px; border: 2px solid #B0BEC5;
       border-radius: 4px; background: white; display: flex; align-items: center;
-      justify-content: center; margin-top: 1px; transition: all 0.15s; flex-shrink: 0;
+      justify-content: center; margin-top: 1px; transition: all 0.15s; flex-shrink: 0; cursor: pointer;
     }
     .caja-check.marcado { border-color: #2E75B6; background: #2E75B6; }
     .caja-check .check-mark { color: white; font-size: 11px; line-height: 1; display: none; }
@@ -84,7 +84,7 @@
     .caja-radio {
       width: 18px; height: 18px; min-width: 18px; border: 2px solid #B0BEC5;
       border-radius: 50%; background: white; display: flex; align-items: center;
-      justify-content: center; transition: all 0.15s; flex-shrink: 0;
+      justify-content: center; transition: all 0.15s; flex-shrink: 0; cursor: pointer;
     }
     .caja-radio.marcado { border-color: #2E75B6; }
     .caja-radio .radio-dot { width: 8px; height: 8px; border-radius: 50%; background: #2E75B6; display: none; }
@@ -289,7 +289,8 @@
         </div>
       </div>
       <div class="campo-body">
-        <textarea id="rol" rows="2" placeholder="Ej: Actúa como un redactor profesional especializado en correos de negocios en español."></textarea>
+        <textarea id="rol" rows="2" placeholder="Actúa como un redactor profesional especializado en correos de negocios en español."></textarea>
+
       </div>
     </div>
 
@@ -508,6 +509,7 @@
     <div id="btn-wrap">
       <button id="btn-generar">Generar mi prompt →</button>
       <p id="aviso-campos">Completa los campos obligatorios para mejores resultados</p>
+      <p style="margin-top:8px;"><button onclick="if(confirm('¿Borrar todo el formulario?')) { limpiarEstado(); location.reload(); }" style="background:none;border:none;color:#8A9BAD;font-size:12px;cursor:pointer;font-family:sans-serif;text-decoration:underline;">Limpiar formulario</button></p>
     </div>
 
     <!-- RESULTADO -->
@@ -555,6 +557,7 @@
       box.classList.toggle('marcado', checks[id]);
       txt.classList.toggle('activo', checks[id]);
       actualizarProgreso();
+      guardarEstado();
     }
 
     function selectRadio(grupo, id) {
@@ -566,22 +569,31 @@
       document.getElementById('radio-' + id).classList.add('marcado');
       document.getElementById('rtxt-' + id).classList.add('activo');
       actualizarProgreso();
+      guardarEstado();
     }
 
-    // Eventos táctiles iOS-compatibles para checks y radios
+    // Eventos táctiles iOS — solo responden en la caja (check/radio), no en el texto
     function bindOpcion(el) {
       const checkId = el.getAttribute('data-check');
       const radioGrupo = el.getAttribute('data-radio-grupo');
       const radioId = el.getAttribute('data-radio-id');
 
+      // Buscar la caja dentro del div opcion
+      const caja = el.querySelector('.caja-check, .caja-radio');
+      if (!caja) return;
+
+      let tocado = false;
       function handler(e) {
         e.preventDefault();
+        e.stopPropagation();
+        tocado = true;
         if (checkId) toggleCheck(checkId);
         if (radioGrupo && radioId) selectRadio(radioGrupo, radioId);
+        setTimeout(() => { tocado = false; }, 300);
       }
 
-      el.addEventListener('touchend', handler, { passive: false });
-      el.addEventListener('click', handler);
+      caja.addEventListener('touchend', handler, { passive: false });
+      caja.addEventListener('click', function() { if (!tocado) handler({ preventDefault: ()=>{}, stopPropagation: ()=>{} }); });
     }
 
     document.querySelectorAll('[data-check], [data-radio-id]').forEach(bindOpcion);
@@ -641,10 +653,192 @@
       texto.textContent = pct === 100 ? '✓ Listo' : 'Obligatorios: ' + pct + '%';
     }
 
-    // Escuchar cambios en textareas
+    // ── LOCALSTORAGE: guardar y restaurar estado ──
+    const STORAGE_KEY = 'plantilla_claude_v1';
+
+    function guardarEstado() {
+      const estado = {
+        valores: {},
+        checks: checks,
+        radios: radios,
+        extras: {}
+      };
+      // Guardar textareas
+      document.querySelectorAll('textarea[id], input[type=text][id]').forEach(el => {
+        estado.valores[el.id] = el.value;
+      });
+      // Guardar inputs extra
+      document.querySelectorAll('input.extra[id]').forEach(el => {
+        estado.extras[el.id] = el.value;
+      });
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(estado)); } catch(e) {}
+    }
+
+    function restaurarEstado() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return;
+        const estado = JSON.parse(raw);
+
+        // Restaurar textareas
+        if (estado.valores) {
+          Object.keys(estado.valores).forEach(id => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            // Si el campo rol está vacío en memoria, respetar el valor por defecto
+            if (id === 'rol' && !estado.valores[id]) return;
+            el.value = estado.valores[id];
+          });
+        }
+
+        // Restaurar checks
+        if (estado.checks) {
+          Object.keys(estado.checks).forEach(id => {
+            checks[id] = estado.checks[id];
+            const box = document.getElementById('box-' + id);
+            const txt = document.getElementById('txt-' + id);
+            if (box) box.classList.toggle('marcado', checks[id]);
+            if (txt) txt.classList.toggle('activo', checks[id]);
+          });
+        }
+
+        // Restaurar radios
+        if (estado.radios) {
+          Object.keys(estado.radios).forEach(grupo => {
+            const id = estado.radios[grupo];
+            if (id) {
+              radios[grupo] = id;
+              const radio = document.getElementById('radio-' + id);
+              const rtxt = document.getElementById('rtxt-' + id);
+              if (radio) radio.classList.add('marcado');
+              if (rtxt) rtxt.classList.add('activo');
+            }
+          });
+        }
+
+        // Restaurar extras
+        if (estado.extras) {
+          Object.keys(estado.extras).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.value = estado.extras[id];
+          });
+        }
+      } catch(e) {}
+    }
+
+    function limpiarEstado() {
+      try { localStorage.removeItem(STORAGE_KEY); } catch(e) {}
+    }
+
+    // Escuchar cambios en textareas y guardar
     document.querySelectorAll('textarea, input[type=text]').forEach(el => {
-      el.addEventListener('input', actualizarProgreso);
+      el.addEventListener('input', () => { actualizarProgreso(); guardarEstado(); });
     });
+
+    // CAMPO ROL: prefijo fijo "Actúa como " — compatible iOS/PC/Mac
+    const PREFIJO_ROL = 'Actúa como ';
+    const rolEl = document.getElementById('rol');
+    let rolUltimoValido = '';
+
+    function inicializarRol() {
+      // Si hay valor guardado que ya incluye el prefijo, respetar
+      if (rolEl.value && rolEl.value !== PREFIJO_ROL) {
+        if (!rolEl.value.startsWith(PREFIJO_ROL)) {
+          rolEl.value = PREFIJO_ROL + rolEl.value;
+        }
+        rolUltimoValido = rolEl.value;
+      } else {
+        rolEl.value = '';
+        rolUltimoValido = '';
+      }
+    }
+
+    function aplicarPrefijoRol() {
+      const val = rolEl.value;
+      if (val === '') {
+        // Campo vacío: permitir (placeholder visible)
+        rolUltimoValido = '';
+        return;
+      }
+      if (val.startsWith(PREFIJO_ROL)) {
+        // Prefijo intacto: guardar como último válido
+        rolUltimoValido = val;
+      } else {
+        // Prefijo dañado: restaurar último válido o reconstruir
+        const cursorPos = rolEl.selectionStart;
+        const prefijoDanado = val.match(/^[Aa]ct[úu]a\s+como\s*/i);
+        let restoTexto;
+        if (prefijoDanado) {
+          restoTexto = val.slice(prefijoDanado[0].length);
+        } else {
+          // El prefijo fue parcialmente borrado; intentar recuperar el texto útil
+          restoTexto = rolUltimoValido
+            ? rolUltimoValido.slice(PREFIJO_ROL.length)
+            : val;
+        }
+        rolEl.value = PREFIJO_ROL + restoTexto;
+        rolUltimoValido = rolEl.value;
+        // Reposicionar cursor al final del texto útil
+        const nuevaPos = Math.max(PREFIJO_ROL.length, cursorPos);
+        setTimeout(() => {
+          rolEl.setSelectionRange(nuevaPos, nuevaPos);
+        }, 0);
+      }
+    }
+
+    rolEl.addEventListener('focus', function() {
+      if (!this.value) {
+        this.value = PREFIJO_ROL;
+        rolUltimoValido = PREFIJO_ROL;
+      }
+      const len = this.value.length;
+      setTimeout(() => { this.setSelectionRange(len, len); }, 0);
+    });
+
+    rolEl.addEventListener('input', function() {
+      aplicarPrefijoRol();
+      actualizarProgreso();
+      guardarEstado();
+    });
+
+    // compositionend cubre teclados de voz e idiomas con IME (iOS dictado)
+    rolEl.addEventListener('compositionend', function() {
+      aplicarPrefijoRol();
+    });
+
+    rolEl.addEventListener('blur', function() {
+      // Si sólo quedó el prefijo sin texto útil, limpiar para mostrar placeholder
+      if (this.value === PREFIJO_ROL || this.value.trim() === PREFIJO_ROL.trim()) {
+        this.value = '';
+        rolUltimoValido = '';
+      }
+    });
+
+    // keydown: funciona en PC/Mac y en parte en iOS — capa adicional de protección
+    rolEl.addEventListener('keydown', function(e) {
+      if (e.key === 'Backspace' || e.key === 'Delete') {
+        const start = this.selectionStart;
+        const end = this.selectionEnd;
+        // Selección que incluye el prefijo
+        if (start < PREFIJO_ROL.length && start === end) {
+          e.preventDefault();
+        }
+        // Selección total o parcial que toca el prefijo
+        if (start < PREFIJO_ROL.length && end > start) {
+          e.preventDefault();
+          // Borrar sólo la parte fuera del prefijo
+          const nuevoTexto = PREFIJO_ROL + this.value.slice(Math.max(end, PREFIJO_ROL.length));
+          this.value = nuevoTexto;
+          rolUltimoValido = nuevoTexto;
+          setTimeout(() => { this.setSelectionRange(PREFIJO_ROL.length, PREFIJO_ROL.length); }, 0);
+        }
+      }
+    });
+
+    // Restaurar al cargar
+    restaurarEstado();
+    inicializarRol();
+    actualizarProgreso();
 
     function generar() {
       const lineas = [];
@@ -666,7 +860,7 @@
       const restr = Object.keys(checks).filter(k => k.startsWith('r') && checks[k]).map(k => '• ' + checkTextos[k]);
       const extraRestr = document.getElementById('extra-restricciones').value.trim();
       if (extraRestr) restr.push('• ' + extraRestr);
-      if (restr.length) { lineas.push('--- 5. ¿QUÉ NO DEBE HACER CLAUDE? ---'); restr.forEach(r => lineas.push(r)); lineas.push(''); }
+      if (restr.length) { lineas.push('--- 5. ¿QUÉ REGLAS DEBE SEGUIR CLAUDE? ---'); restr.forEach(r => lineas.push(r)); lineas.push(''); }
 
       if (radios.formato) {
         lineas.push('--- 6. ¿CÓMO QUIERES QUE SE VEA LA RESPUESTA? ---');
@@ -740,7 +934,9 @@
       document.body.removeChild(ta);
     }
 
-    actualizarProgreso();
+    // Guardado automático también en checks/radios
+    const _origToggle = toggleCheck;
+    // (guardado ya integrado en handler)
   </script>
 </body>
 </html>
