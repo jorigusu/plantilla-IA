@@ -58,6 +58,10 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
 .chip{padding:.3rem .85rem;border-radius:999px;font-size:12px;border:0.5px solid #DDDBD6;background:#F2F0EC;cursor:pointer;color:#4A4845;font-family:Arial,sans-serif;transition:background .15s,border .15s}
 .chip:hover{background:#E8E6E1}
 .chip.active{background:#D6E4B8;border-color:#8A9A4A;color:#3B5A10;font-weight:500}
+.preview-label{font-size:11px;color:#888888;margin-top:.85rem;margin-bottom:.3rem;display:flex;align-items:center;gap:5px}
+.preview-label i{font-size:13px;color:#6B7A3C}
+.preview-box{background:#F2F0EC;border:0.5px solid #DDDBD6;border-left:2.5px solid #6B7A3C;border-radius:8px;padding:.55rem .75rem;font-size:12px;color:#4A4845;font-family:'Courier New',monospace;white-space:pre-wrap;line-height:1.65;min-height:1.8rem}
+.preview-box.empty{color:#BBBBAA;font-family:Arial,sans-serif;font-size:12px}
 </style>
 </head>
 <body>
@@ -130,11 +134,15 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
       <label class="cb-row"><input type="checkbox" name="rules" value="Si algo no es posible, explícalo claramente" checked><span>Si algo no es posible, explícalo</span></label>
       <label class="cb-row"><input type="checkbox" name="rules" value="Si necesitas más información para responder bien, pregúntame antes de continuar" checked><span>Si necesitas más info, pregúntame primero</span></label>
     </div>
+    <p class="hint" style="margin-top:.85rem;margin-bottom:.3rem">Reglas adicionales <span style="font-weight:400">(opcional — una por línea)</span></p>
+    <textarea id="f5extra" rows="2" placeholder="Ej: Usa siempre bullet points&#10;Ej: No uses lenguaje legal" oninput="updatePreview5()"></textarea>
+    <p class="preview-label"><i class="ti ti-eye"></i> Previsualización</p>
+    <div class="preview-box" id="preview5"></div>
   </div>
 
   <div class="card">
     <div class="field-header"><span class="field-num">6</span><span class="field-title">¿Cómo quieres que se vea la respuesta?</span><span class="badge badge-required">Obligatorio</span></div>
-    <p class="hint">Elige una opción.</p>
+    <p class="hint">Elige una opción o escribe el formato exacto que necesitas.</p>
     <div class="radio-grid">
       <label class="radio-row" onclick="onRadioClick(this)"><input type="radio" name="format" value="Informe ejecutivo (Resumen + puntos clave + recomendación)"><span>Informe ejecutivo</span></label>
       <label class="radio-row" onclick="onRadioClick(this)"><input type="radio" name="format" value="Correo formal (Asunto / Cuerpo / Despedida)"><span>Correo formal</span></label>
@@ -143,6 +151,10 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
       <label class="radio-row" onclick="onRadioClick(this)"><input type="radio" name="format" value="Texto libre, sin encabezados"><span>Texto libre, sin encabezados</span></label>
       <label class="radio-row" onclick="onRadioClick(this)"><input type="radio" name="format" value="Respuesta corta, máximo 3 párrafos"><span>Respuesta corta, máx. 3 párrafos</span></label>
     </div>
+    <p class="hint" style="margin-top:.85rem;margin-bottom:.3rem">O describe el formato exacto <span style="font-weight:400">(sobreescribe la selección de arriba)</span></p>
+    <textarea id="f6custom" rows="2" placeholder="Ej: Primero un resumen de 2 líneas, luego una tabla con columnas Pros y Contras, y al final una recomendación en negrita." oninput="updatePreview6()"></textarea>
+    <p class="preview-label"><i class="ti ti-eye"></i> Previsualización</p>
+    <div class="preview-box" id="preview6"></div>
   </div>
 
   <div class="card">
@@ -217,6 +229,26 @@ function onRadioClick(row){
   grid.querySelectorAll('.radio-row').forEach(r=>r.classList.remove('selected'));
   row.classList.add('selected');
   updateProgress();
+  updatePreview6();
+}
+function updatePreview5(){
+  const rules=getChecked('rules');
+  const extra=document.getElementById('f5extra').value.trim();
+  const extraLines=extra?extra.split('\n').map(l=>l.trim()).filter(Boolean):[];
+  const all=[...rules,...extraLines];
+  const box=document.getElementById('preview5');
+  if(all.length===0){box.className='preview-box empty';box.textContent='(sin reglas seleccionadas)';return;}
+  box.className='preview-box';
+  box.textContent='## REGLAS\n'+all.map(r=>'- '+r).join('\n');
+}
+function updatePreview6(){
+  const custom=document.getElementById('f6custom').value.trim();
+  const radio=getRadio('format');
+  const val=custom||radio;
+  const box=document.getElementById('preview6');
+  if(!val){box.className='preview-box empty';box.textContent='(elige una opción o escribe el formato)';return;}
+  box.className='preview-box';
+  box.textContent='## FORMATO DE RESPUESTA\n'+val;
 }
 function selectRole(btn,role){
   document.getElementById('f3').value='Actúa como un experto en '+role;
@@ -241,8 +273,8 @@ function updateProgress(){
     document.getElementById('f1').value.trim()!=='',
     document.getElementById('f2').value.trim()!=='',
     document.getElementById('f4').value.trim()!=='',
-    getChecked('rules').length>0,
-    getRadio('format')!=='',
+    getChecked('rules').length>0||document.getElementById('f5extra').value.trim()!=='',
+    getRadio('format')!==''||document.getElementById('f6custom').value.trim()!=='',
     getChecked('criteria').length>0
   ];
   const done=checks.filter(Boolean).length;
@@ -254,15 +286,21 @@ document.querySelectorAll('textarea,input[type=text],input[type=checkbox]').forE
   el.addEventListener('change',updateProgress);
   el.addEventListener('input',updateProgress);
 });
+document.querySelectorAll('input[name="rules"]').forEach(el=>{
+  el.addEventListener('change',updatePreview5);
+});
 updateProgress();
+updatePreview5();
+updatePreview6();
 function generate(){
   const f1=document.getElementById('f1').value.trim();
   const f2=document.getElementById('f2').value.trim();
   const audience=getAudience();
   const f3=document.getElementById('f3').value.trim();
   const f4=document.getElementById('f4').value.trim();
-  const rules=getChecked('rules');
-  const format=getRadio('format');
+  const extraRules=document.getElementById('f5extra').value.trim().split('\n').map(l=>l.trim()).filter(Boolean);
+  const rules=[...getChecked('rules'),...extraRules];
+  const format=document.getElementById('f6custom').value.trim()||getRadio('format');
   const tones=getChecked('tone');
   const f8a=document.getElementById('f8a').value.trim();
   const f8b=document.getElementById('f8b').value.trim();
@@ -319,6 +357,8 @@ function clearForm(){
   document.getElementById('outputCard').style.display='none';
   document.getElementById('incMsg').textContent='';
   updateProgress();
+  updatePreview5();
+  updatePreview6();
 }
 </script>
 </body>
