@@ -60,8 +60,13 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
 .chip.active{background:#D6E4B8;border-color:#8A9A4A;color:#3B5A10;font-weight:500}
 .preview-label{font-size:11px;color:#888888;margin-top:.85rem;margin-bottom:.3rem;display:flex;align-items:center;gap:5px}
 .preview-label i{font-size:13px;color:#6B7A3C}
-.preview-box{background:#F2F0EC;border:0.5px solid #DDDBD6;border-left:2.5px solid #6B7A3C;border-radius:8px;padding:.55rem .75rem;font-size:12px;color:#4A4845;font-family:'Courier New',monospace;white-space:pre-wrap;line-height:1.65;min-height:1.8rem}
-.preview-box.empty{color:#BBBBAA;font-family:Arial,sans-serif;font-size:12px}
+.preview-box{background:#F2F0EC;border:0.5px solid #DDDBD6;border-left:2.5px solid #6B7A3C;border-radius:8px;padding:.65rem .85rem;font-size:13px;color:#4A4845;line-height:1.6;min-height:2rem;transition:opacity .2s}
+.preview-box.empty{color:#BBBBAA;font-size:12px;font-style:italic}
+.preview-box .ph{font-size:11px;font-weight:600;letter-spacing:.06em;color:#6B7A3C;text-transform:uppercase;margin-bottom:.35rem}
+.preview-box ul{list-style:none;padding:0;margin:0}
+.preview-box ul li{padding:.1rem 0 .1rem 1rem;position:relative}
+.preview-box ul li::before{content:"–";position:absolute;left:0;color:#8A9A4A}
+.preview-box .fmt-val{margin:0}
 </style>
 </head>
 <body>
@@ -231,24 +236,25 @@ function onRadioClick(row){
   updateProgress();
   updatePreview6();
 }
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
 function updatePreview5(){
   const rules=getChecked('rules');
   const extra=document.getElementById('f5extra').value.trim();
   const extraLines=extra?extra.split('\n').map(l=>l.trim()).filter(Boolean):[];
   const all=[...rules,...extraLines];
   const box=document.getElementById('preview5');
-  if(all.length===0){box.className='preview-box empty';box.textContent='(sin reglas seleccionadas)';return;}
+  if(all.length===0){box.className='preview-box empty';box.innerHTML='Sin reglas seleccionadas';return;}
   box.className='preview-box';
-  box.textContent='## REGLAS\n'+all.map(r=>'- '+r).join('\n');
+  box.innerHTML='<div class="ph">Reglas</div><ul>'+all.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ul>';
 }
 function updatePreview6(){
   const custom=document.getElementById('f6custom').value.trim();
   const radio=getRadio('format');
   const val=custom||radio;
   const box=document.getElementById('preview6');
-  if(!val){box.className='preview-box empty';box.textContent='(elige una opción o escribe el formato)';return;}
+  if(!val){box.className='preview-box empty';box.innerHTML='Elige una opción o escribe el formato';return;}
   box.className='preview-box';
-  box.textContent='## FORMATO DE RESPUESTA\n'+val;
+  box.innerHTML='<div class="ph">Formato de respuesta</div><p class="fmt-val">'+esc(val)+'</p>';
 }
 function selectRole(btn,role){
   document.getElementById('f3').value='Actúa como un experto en '+role;
