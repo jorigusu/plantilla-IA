@@ -128,21 +128,19 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
 
   <div class="card">
     <div class="field-header"><span class="field-num">5</span><span class="field-title">¿Qué reglas debe seguir la IA?</span><span class="badge badge-optional">Opcional</span></div>
-    <p class="hint">Activa o desactiva cada regla tocándola. Todas activas por defecto.</p>
+    <p class="hint">Toca para activar o desactivar. Todas activas por defecto.</p>
     <div class="radio-grid" id="rulesGrid">
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="Responde solo en español" checked style="display:none"><span>Responde solo en español</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="No inventes datos ni cifras; si no sabes algo, dilo" checked style="display:none"><span>No inventes datos ni cifras</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="No uses palabras técnicas sin explicarlas antes" checked style="display:none"><span>No uses términos técnicos sin explicarlos</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="No uses emojis ni emoticones" checked style="display:none"><span>No uses emojis ni emoticones</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="Sé breve: máximo una página o 400 palabras" checked style="display:none"><span>Sé breve: máximo 400 palabras</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="No repitas información que ya está en la pregunta" checked style="display:none"><span>No repitas información de la pregunta</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="Si algo no es posible, explícalo claramente" checked style="display:none"><span>Si algo no es posible, explícalo</span></label>
-      <label class="radio-row selected" onclick="onToggleClick(this)"><input type="checkbox" name="rules" value="Si necesitas más información para responder bien, pregúntame antes de continuar" checked style="display:none"><span>Si necesitas más info, pregúntame primero</span></label>
+      <div class="radio-row selected" data-rule="Responde solo en español" onclick="onToggleClick(this)"><span>Responde solo en español</span></div>
+      <div class="radio-row selected" data-rule="No inventes datos ni cifras; si no sabes algo, dilo" onclick="onToggleClick(this)"><span>No inventes datos ni cifras</span></div>
+      <div class="radio-row selected" data-rule="No uses palabras técnicas sin explicarlas antes" onclick="onToggleClick(this)"><span>No uses términos técnicos sin explicarlos</span></div>
+      <div class="radio-row selected" data-rule="No uses emojis ni emoticones" onclick="onToggleClick(this)"><span>No uses emojis ni emoticones</span></div>
+      <div class="radio-row selected" data-rule="Sé breve: máximo una página o 400 palabras" onclick="onToggleClick(this)"><span>Sé breve: máximo 400 palabras</span></div>
+      <div class="radio-row selected" data-rule="No repitas información que ya está en la pregunta" onclick="onToggleClick(this)"><span>No repitas información de la pregunta</span></div>
+      <div class="radio-row selected" data-rule="Si algo no es posible, explícalo claramente" onclick="onToggleClick(this)"><span>Si algo no es posible, explícalo</span></div>
+      <div class="radio-row selected" data-rule="Si necesitas más información para responder bien, pregúntame antes de continuar" onclick="onToggleClick(this)"><span>Si necesitas más info, pregúntame primero</span></div>
     </div>
     <p class="hint" style="margin-top:.85rem;margin-bottom:.3rem">Reglas adicionales <span style="font-weight:400">(opcional — una por línea)</span></p>
-    <textarea id="f5extra" rows="2" placeholder="Ej: Usa siempre bullet points&#10;Ej: No uses lenguaje legal" oninput="updatePreview5();updateProgress()"></textarea>
-    <p class="preview-label"><i class="ti ti-eye"></i> Previsualización</p>
-    <div class="preview-box" id="preview5"></div>
+    <textarea id="f5extra" rows="2" placeholder="Ej: Usa siempre bullet points&#10;Ej: No uses lenguaje legal" oninput="updateProgress()"></textarea>
   </div>
 
   <div class="card">
@@ -230,11 +228,8 @@ function onAudienceClick(row){
   updateProgress();
 }
 function onToggleClick(row){
-  const cb=row.querySelector('input[type=checkbox]');
-  cb.checked=!cb.checked;
-  row.classList.toggle('selected',cb.checked);
+  row.classList.toggle('selected');
   updateProgress();
-  updatePreview5();
 }
 function onRadioClick(row){
   const grid=row.closest('.radio-grid');
@@ -244,16 +239,6 @@ function onRadioClick(row){
   updatePreview6();
 }
 function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
-function updatePreview5(){
-  const rules=getChecked('rules');
-  const extra=document.getElementById('f5extra').value.trim();
-  const extraLines=extra?extra.split('\n').map(l=>l.trim()).filter(Boolean):[];
-  const all=[...rules,...extraLines];
-  const box=document.getElementById('preview5');
-  if(all.length===0){box.className='preview-box empty';box.innerHTML='Sin reglas seleccionadas';return;}
-  box.className='preview-box';
-  box.innerHTML='<div class="ph">Reglas</div><ul>'+all.map(r=>'<li>'+esc(r)+'</li>').join('')+'</ul>';
-}
 function updatePreview6(){
   const custom=document.getElementById('f6custom').value.trim();
   const radio=getRadio('format');
@@ -267,6 +252,11 @@ function selectRole(btn,role){
   document.getElementById('f3').value='Actúa como un experto en '+role;
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
   btn.classList.add('active');
+}
+function getRules(){
+  const tiles=[...document.querySelectorAll('#rulesGrid .radio-row.selected')].map(d=>d.dataset.rule);
+  const extra=document.getElementById('f5extra').value.trim().split('\n').map(l=>l.trim()).filter(Boolean);
+  return [...tiles,...extra];
 }
 function getChecked(name){
   return [...document.querySelectorAll('input[name="'+name+'"]:checked')].map(c=>c.value);
@@ -286,7 +276,7 @@ function updateProgress(){
     document.getElementById('f1').value.trim()!=='',
     document.getElementById('f2').value.trim()!=='',
     document.getElementById('f4').value.trim()!=='',
-    getChecked('rules').length>0||document.getElementById('f5extra').value.trim()!=='',
+    getRules().length>0,
     getRadio('format')!==''||document.getElementById('f6custom').value.trim()!=='',
     getChecked('criteria').length>0
   ];
@@ -300,7 +290,6 @@ document.querySelectorAll('textarea,input[type=text],input[type=checkbox]').forE
   el.addEventListener('input',updateProgress);
 });
 updateProgress();
-updatePreview5();
 updatePreview6();
 function generate(){
   const f1=document.getElementById('f1').value.trim();
@@ -308,8 +297,7 @@ function generate(){
   const audience=getAudience();
   const f3=document.getElementById('f3').value.trim();
   const f4=document.getElementById('f4').value.trim();
-  const extraRules=document.getElementById('f5extra').value.trim().split('\n').map(l=>l.trim()).filter(Boolean);
-  const rules=[...getChecked('rules'),...extraRules];
+  const rules=getRules();
   const format=document.getElementById('f6custom').value.trim()||getRadio('format');
   const tones=getChecked('tone');
   const f8a=document.getElementById('f8a').value.trim();
@@ -353,18 +341,16 @@ function clearForm(){
   document.querySelectorAll('input[type=text]').forEach(i=>i.value='');
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
   document.querySelectorAll('.radio-row').forEach(r=>r.classList.remove('selected'));
+  document.querySelectorAll('#rulesGrid .radio-row').forEach(r=>r.classList.add('selected'));
   document.querySelectorAll('input[type=checkbox]').forEach(c=>{
-    const d=['Responde solo en español','No inventes datos ni cifras; si no sabes algo, dilo','No uses palabras técnicas sin explicarlas antes','No uses emojis ni emoticones','Sé breve: máximo una página o 400 palabras','No repitas información que ya está en la pregunta','Si algo no es posible, explícalo claramente','Si necesitas más información para responder bien, pregúntame antes de continuar','No contiene datos inventados','Respeta el formato que pedí','Incluye al menos una recomendación concreta','El lenguaje es apropiado para quien va a leerlo','No es más larga de lo que necesito'];
-    c.checked=d.includes(c.value);
-    const row=c.closest('.radio-row');
-    if(row) row.classList.toggle('selected',c.checked);
+    const defaults=['No contiene datos inventados','Respeta el formato que pedí','Incluye al menos una recomendación concreta','El lenguaje es apropiado para quien va a leerlo','No es más larga de lo que necesito'];
+    c.checked=defaults.includes(c.value);
   });
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
   document.getElementById('audienceCustomWrap').classList.remove('visible');
   document.getElementById('outputCard').style.display='none';
   document.getElementById('incMsg').textContent='';
   updateProgress();
-  updatePreview5();
   updatePreview6();
 }
 </script>
