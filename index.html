@@ -189,14 +189,14 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
   </div>
 
   <div class="card">
-    <div class="field-header"><span class="field-num">9</span><span class="field-title">¿Cuándo dirás que la respuesta fue buena?</span><span class="badge badge-required">Obligatorio</span></div>
-    <p class="hint">Marca los criterios de calidad que debe cumplir la respuesta.</p>
-    <div class="checkbox-grid">
-      <label class="cb-row"><input type="checkbox" name="criteria" value="No contiene datos inventados" checked><span>No contiene datos inventados</span></label>
-      <label class="cb-row"><input type="checkbox" name="criteria" value="Respeta el formato que pedí" checked><span>Respeta el formato que pedí</span></label>
-      <label class="cb-row"><input type="checkbox" name="criteria" value="Incluye al menos una recomendación concreta" checked><span>Incluye al menos una recomendación</span></label>
-      <label class="cb-row"><input type="checkbox" name="criteria" value="El lenguaje es apropiado para quien va a leerlo" checked><span>Lenguaje apropiado para el lector</span></label>
-      <label class="cb-row"><input type="checkbox" name="criteria" value="No es más larga de lo que necesito" checked><span>No es más larga de lo necesario</span></label>
+    <div class="field-header"><span class="field-num">9</span><span class="field-title">¿Cuándo dirás que la respuesta fue buena?</span><span class="badge badge-optional">Opcional</span></div>
+    <p class="hint">Toca para activar o desactivar. Todos activos por defecto.</p>
+    <div class="radio-grid" id="criteriaGrid">
+      <div class="radio-row selected" data-criteria="No contiene datos inventados" onclick="onToggleClick(this)"><span>No contiene datos inventados</span></div>
+      <div class="radio-row selected" data-criteria="Respeta el formato que pedí" onclick="onToggleClick(this)"><span>Respeta el formato que pedí</span></div>
+      <div class="radio-row selected" data-criteria="Incluye al menos una recomendación concreta" onclick="onToggleClick(this)"><span>Incluye al menos una recomendación</span></div>
+      <div class="radio-row selected" data-criteria="El lenguaje es apropiado para quien va a leerlo" onclick="onToggleClick(this)"><span>Lenguaje apropiado para el lector</span></div>
+      <div class="radio-row selected" data-criteria="No es más larga de lo que necesito" onclick="onToggleClick(this)"><span>No es más larga de lo necesario</span></div>
     </div>
   </div>
 
@@ -258,6 +258,9 @@ function getRules(){
   const extra=document.getElementById('f5extra').value.trim().split('\n').map(l=>l.trim()).filter(Boolean);
   return [...tiles,...extra];
 }
+function getCriteria(){
+  return [...document.querySelectorAll('#criteriaGrid .radio-row.selected')].map(d=>d.dataset.criteria);
+}
 function getChecked(name){
   return [...document.querySelectorAll('input[name="'+name+'"]:checked')].map(c=>c.value);
 }
@@ -278,7 +281,7 @@ function updateProgress(){
     document.getElementById('f4').value.trim()!=='',
     getRules().length>0,
     getRadio('format')!==''||document.getElementById('f6custom').value.trim()!=='',
-    getChecked('criteria').length>0
+    getCriteria().length>0
   ];
   const done=checks.filter(Boolean).length;
   const pct=Math.round(done/6*100);
@@ -302,7 +305,7 @@ function generate(){
   const tones=getChecked('tone');
   const f8a=document.getElementById('f8a').value.trim();
   const f8b=document.getElementById('f8b').value.trim();
-  const criteria=getChecked('criteria');
+  const criteria=getCriteria();
   document.getElementById('incMsg').textContent='';
   let p='';
   if(f1) p+='## TAREA\n'+f1+'\n\n';
@@ -342,10 +345,8 @@ function clearForm(){
   document.querySelectorAll('input[type=radio]').forEach(r=>r.checked=false);
   document.querySelectorAll('.radio-row').forEach(r=>r.classList.remove('selected'));
   document.querySelectorAll('#rulesGrid .radio-row').forEach(r=>r.classList.add('selected'));
-  document.querySelectorAll('input[type=checkbox]').forEach(c=>{
-    const defaults=['No contiene datos inventados','Respeta el formato que pedí','Incluye al menos una recomendación concreta','El lenguaje es apropiado para quien va a leerlo','No es más larga de lo que necesito'];
-    c.checked=defaults.includes(c.value);
-  });
+  document.querySelectorAll('#criteriaGrid .radio-row').forEach(r=>r.classList.add('selected'));
+  document.querySelectorAll('input[type=checkbox]').forEach(c=>c.checked=false);
   document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
   document.getElementById('audienceCustomWrap').classList.remove('visible');
   document.getElementById('outputCard').style.display='none';
