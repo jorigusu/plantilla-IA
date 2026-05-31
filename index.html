@@ -60,12 +60,12 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
 .chip.active{background:#D6E4B8;border-color:#8A9A4A;color:#3B5A10;font-weight:500}
 .preview-label{font-size:11px;color:#888888;margin-top:.85rem;margin-bottom:.3rem;display:flex;align-items:center;gap:5px}
 .preview-label i{font-size:13px;color:#6B7A3C}
-.preview-box{background:#F2F0EC;border:0.5px solid #DDDBD6;border-left:2.5px solid #6B7A3C;border-radius:8px;padding:.65rem .85rem;font-size:13px;color:#4A4845;line-height:1.6;min-height:2rem;transition:opacity .2s}
+.preview-box{background:#F9F8F6;border:0.5px solid #DDDBD6;border-radius:8px;padding:.65rem .85rem;font-size:13px;color:#4A4845;line-height:1.6;min-height:2rem}
 .preview-box.empty{color:#BBBBAA;font-size:12px;font-style:italic}
-.preview-box .ph{font-size:11px;font-weight:600;letter-spacing:.06em;color:#6B7A3C;text-transform:uppercase;margin-bottom:.35rem}
+.preview-box .ph{font-size:10px;font-weight:600;letter-spacing:.08em;color:#999896;text-transform:uppercase;margin-bottom:.4rem}
 .preview-box ul{list-style:none;padding:0;margin:0}
-.preview-box ul li{padding:.1rem 0 .1rem 1rem;position:relative}
-.preview-box ul li::before{content:"–";position:absolute;left:0;color:#8A9A4A}
+.preview-box ul li{display:flex;gap:.5rem;padding:.1rem 0}
+.preview-box ul li::before{content:"–";color:#BBBBAA;flex-shrink:0}
 .preview-box .fmt-val{margin:0}
 </style>
 </head>
@@ -146,7 +146,7 @@ textarea:focus,input[type=text]:focus{border-color:#6B7A3C}
   </div>
 
   <div class="card">
-    <div class="field-header"><span class="field-num">6</span><span class="field-title">¿Cómo quieres que se vea la respuesta?</span><span class="badge badge-required">Obligatorio</span></div>
+    <div class="field-header"><span class="field-num">6</span><span class="field-title">¿Cómo quieres que se vea la respuesta?</span><span class="badge badge-optional">Opcional</span></div>
     <p class="hint">Elige una opción o escribe el formato exacto que necesitas.</p>
     <div class="radio-grid">
       <label class="radio-row" onclick="onRadioClick(this)"><input type="radio" name="format" value="Informe ejecutivo (Resumen + puntos clave + recomendación)"><span>Informe ejecutivo</span></label>
